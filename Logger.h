@@ -8,17 +8,21 @@
 #include <sys/socket.h>
 #include <iostream>
 #include <netdb.h>
-
+#include <vector>
+#include <utility>
 
 
 class Logger {
 public:
     Logger();
-    void start(std::string ip);
-    void log(const std::string &message);
+    void start(std::string ip, std::vector<std::string> highlights);
+    void log(std::string message);
 
 private:
     int fd;
+    std::string ip;
+    std::vector<std::string> highlights;
+    struct sockaddr_in sockaddrIn{};
 };
 
 

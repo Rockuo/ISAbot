@@ -135,12 +135,14 @@ void Irc::start(
                 pos = messCont.find(':');
                 string name = messCont.substr(0, pos);
                 messCont.erase(0, pos + 1);
-                sendMessage("NAMES " + chanel + "\r\n");
+
                 if (self.userToMessages.find(name) == self.userToMessages.end()) {
                     vector<string> val = vector<string>();
                     self.userToMessages[name] = val;
                 }
-                self.userToMessages[name].push_back("PRIVMSG " + name + " :" + messCont);
+                self.userToMessages[name].push_back("PRIVMSG " + name + " :" + messCont); //todo check format
+
+                sendMessage("NAMES " + chanel + "\r\n");
             } else if (self.message.find("?today") != std::string::npos) {
                 pos = self.message.find("PRIVMSG");
                 string copy(self.message);
