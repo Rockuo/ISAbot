@@ -1,54 +1,65 @@
 #include <iostream>
 #include <stdlib.h>
 #include <signal.h>
-#include "communicator.h"
-using namespace std;
-void help(char *fname);
-void quit(int sig);
+#include "Irc.h"
+#include "Logger.h"
 
-communicator s = communicator();
+using namespace std;
+void quit(int sig);
+string convertor(const string &message);
+void help(char** argv);
+string getSyslogServer(char** argv);
+vector<string> getHighlights(char** argv);
+
+Irc irc;
+Logger logger;
+
+
 
 int main(int argc, char** argv) {
-    if (argc<5) help(argv[0]);
-
-    /* Map CTRL-C to quit() */
     struct sigaction sa{};
     sa.sa_handler = &quit;
     sa.sa_flags = 0;
     sigemptyset(&sa.sa_mask);
-    sigaction(SIGINT,&sa,0);
-    string channel = argv[3], nickname = argv[4];
-    char buf[513];
+    sigaction(SIGINT,&sa, nullptr);
 
-    /* Connect to host (arg1) on port (arg2) */
-    s.link(argv[1],atoi(argv[2]));
-
-    /* The rest should be self-explanatory */
-    s.sendString(string("USER ") + argv[4] + " 0 * :" + argv[4] + "\r\n");
-    s.sendString(string("NICK ") + argv[4] + "\r\n");
-    string message;
-    while (s.receive(buf)) {
-        message = buf;
-        if (strstr(buf,"PING :") == buf) {
-            buf[1] = 'O';
-            s.sendChars(buf);
-        } else if (message.find(" 001 "+ nickname +" :") != std::string::npos) {
-            s.sendString(string("JOIN ") + argv[3] + "\r\n");
-        } else {
-            cout << buf;
-        }
+    string strChannels = argv[2];
+    vector<string> channels;
+    channels.clear();
+    bool hasPort = string(argv[1]).find(':') != std::string::npos;
+    string host = strtok (argv[1],":");
+    int port = 6667;
+    if(hasPort) {
+        port = stoi(strtok(nullptr, ""));
     }
-    s.unlink();
+    size_t pos = 0;
+    std::string token;
+    while (true) {
+        pos = strChannels.find(',');
+        if(pos == std::string::npos) {
+            break;
+        }
+        token = strChannels.substr(0, pos);
+        channels.push_back(token);
+        strChannels.erase(0, pos + 1);
+    }
+    channels.push_back(strChannels);
+    //todo rest of params
+
+    logger.start("aaa");
+
+    irc.start(host, port, channels, [](string message) -> void{
+        logger.log(convertor(message));
+    });
     return 0;
 }
 
-void help(char *fname) {
-    cout << "Usage: " << fname << " hostname port channel nick" << endl;
-    exit(1);
+string convertor(const string &message) {
+    return "should be converted: " + message; //todo
 }
 
 void quit(int sig) {
-    s.sendString("QUIT :Someone pressed CTRL-C on me.\r\n");
-    s.unlink();
+    irc.sendMessage("QUIT\r\n");
+    irc.unlink();
     exit(0);
 }

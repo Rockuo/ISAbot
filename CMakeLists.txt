@@ -3,5 +3,5 @@ project(ISAbot)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(SOURCE_FILES main.cpp communicator.cpp communicator.h ircCommunicator.cpp ircCommunicator.h)
+set(SOURCE_FILES main.cpp Irc.cpp Irc.h Logger.cpp Logger.h)
 add_executable(ISAbot ${SOURCE_FILES})
