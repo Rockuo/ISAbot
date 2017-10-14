@@ -10,19 +10,20 @@
 #include <netdb.h>
 #include <vector>
 #include <utility>
-
+#include <unistd.h>
 
 class Logger {
 public:
     Logger();
     void start(std::string ip, std::vector<std::string> highlights);
     void log(std::string message);
-
+    int unlink();
 private:
     int fd;
     std::string ip;
     std::vector<std::string> highlights;
     struct sockaddr_in sockaddrIn{};
+    bool shouldLog(const std::string &message);
 };
 
 

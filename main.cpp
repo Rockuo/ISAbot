@@ -1,6 +1,5 @@
 #include <iostream>
-#include <stdlib.h>
-#include <signal.h>
+#include <csignal>
 #include "Irc.h"
 #include "Logger.h"
 
@@ -10,6 +9,7 @@ void quit(int sig);
 void help(vector<string> arguments);
 string getSyslogServer(vector<string> arguments);
 vector<string> getHighlights(vector<string> arguments);
+void close();
 
 vector<string> charArrayToVector(int length, char** array) {
     vector<string> vector;
@@ -22,9 +22,6 @@ vector<string> charArrayToVector(int length, char** array) {
 
 Irc irc;
 Logger logger;
-
-
-
 
 int main(int argc, char** argv) {
     vector<string> arguments = charArrayToVector(argc, argv);
@@ -64,16 +61,23 @@ int main(int argc, char** argv) {
     vector<string> highlights = getHighlights(arguments);
     logger.start(syslogServer, highlights);
 
-    irc.start(host, port, channels, [](string message) -> void{
-        logger.log(message);
-    });
+    try {
+        irc.start(host, port, channels, [](string message) -> void { logger.log(message); });
+    } catch (IrcException& e) {
+        cerr << e.what() << endl;
+        close();
+        return e.getCode();
+    }
     return 0;
 }
 
 void quit(int sig) {
-    irc.sendMessage("QUIT\r\n");
-    irc.unlink();
+    close();
     exit(0);
+}
+void close() {
+    irc.unlink();
+    logger.unlink();
 }
 
 void help(vector<string> arguments) {
@@ -107,6 +111,7 @@ vector<string> getHighlights(vector<string> arguments) {
             while (true) {
                 pos = copy.find(',');
                 if(pos == std::string::npos) {
+                    highlights.push_back(copy);
                     return highlights;
                 }
                 highlights.push_back(copy.substr(0, pos));
