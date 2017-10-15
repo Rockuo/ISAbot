@@ -11,14 +11,6 @@
 using namespace std;
 
 Irc::Irc() = default;
-// JOIN = IN ..to check
-//PART =OUt kanal ..to check
-//QUIT = out all ..to check
-// KICK = out kanal ..to check
-// NICK = zmena jmena ..to check
-//todo 433 nickname in use ..to check
-// todo 465 bann ..to check
-// ERROR :Closing Link .. to check
 int Irc::unlink() {
     self.sendMessage("QUIT\r\n");
     return close(self.fd);
@@ -131,8 +123,8 @@ bool Irc::catchLeave() {
 void Irc::sendAllJoined(){
     for(pair<const string, UserList> & chUPair: self.chanelUsers) {
         map<string, vector<string>> messageMap = self.chanelToUserToMessages[chUPair.first];
-        for(string user: chUPair.second.getUsers()) {
-            for(string userMessage: messageMap[user]) {
+        for(const string &user: chUPair.second.getUsers()) {
+            for(const string &userMessage: messageMap[user]) {
                 sendMessage(userMessage);
             }
             self.chanelToUserToMessages[chUPair.first][user].clear();
@@ -222,6 +214,9 @@ const function<void(std::string)> &callback
 
     struct sockaddr_in sockaddrIn{};
     struct hostent *hostess_twinkies = gethostbyname(host.c_str());
+    if (hostess_twinkies == nullptr) {
+        throw IrcException("ERROR Connectiong to IRC server");
+    }
     self.fd = socket(PF_INET, SOCK_STREAM, 0); //SOCK_DGRAM
     sockaddrIn.sin_family = AF_INET;
     sockaddrIn.sin_port = htons(static_cast<uint16_t>(port));

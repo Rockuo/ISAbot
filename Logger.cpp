@@ -2,8 +2,6 @@
 // Created by rockuo on 29.9.17.
 //
 
-#include <arpa/inet.h>
-#include <cstring>
 #include "Logger.h"
 
 #define self (*this)
@@ -22,7 +20,7 @@ void Logger::start(std::string ip, std::vector<std::string> highlights) {
     struct sockaddr_in local;
     socklen_t len = sizeof(local);
     if (getsockname(self.fd, (struct sockaddr *) &local, &len) == -1){
-        //todo fail
+        throw std::exception();
     }
     self.ip = inet_ntoa(local.sin_addr);
 

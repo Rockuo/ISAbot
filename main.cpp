@@ -10,6 +10,7 @@ void help(vector<string> arguments);
 string getSyslogServer(vector<string> arguments);
 vector<string> getHighlights(vector<string> arguments);
 void close();
+void doHelp();
 
 vector<string> charArrayToVector(int length, char** array) {
     vector<string> vector;
@@ -26,6 +27,11 @@ Logger logger;
 int main(int argc, char** argv) {
     vector<string> arguments = charArrayToVector(argc, argv);
     help(arguments);
+    if(argc <3) {
+        cerr << "Nedostatek argumentů" << endl;
+        doHelp();
+        exit(1);
+    }
     struct sigaction sa{};
     sa.sa_handler = &quit;
     sa.sa_flags = 0;
@@ -59,7 +65,13 @@ int main(int argc, char** argv) {
     }
 
     vector<string> highlights = getHighlights(arguments);
-    logger.start(syslogServer, highlights);
+    try {
+        logger.start(syslogServer, highlights);
+    } catch (exception& e) {
+        cerr << "Logger unreachable" << endl;
+        close();
+        return 3;
+    }
 
     try {
         irc.start(host, port, channels, [](string message) -> void { logger.log(message); });
@@ -80,14 +92,27 @@ void close() {
     logger.unlink();
 }
 
+void doHelp() {
+    cout << "Popis\n"
+            "ISAbot se připojuje k zadanému irc serveru a kanálu nad kterým poslouchá. Zašle-li někdo na server zprávu ?today - zašle zprávu na daný kanál s datem ve formátu dd.mm.yyyy, zašle-li někdo ?msg <nickname>:<msg> - pokud je uživatel na daném kanále, odešle mu zprávu okamžitě na tentýž kanál, pokud uživatel momentálně není na kanále, zprávu si uloží a odešle ji hned jakmile se daný uživatel připojí na daný kanál (obsah zprávy bude <nickname>:<msg>). Dále loguje přijaté zprávy na zadaný syslog server, pokud zpráva obsahuje jedno ze zadaných “HIGHLIGHT”.\n"
+            "Použití \n"
+            "isabot HOST[:PORT] CHANNELS [-s SYSLOG_SERVER] [-l HIGHLIGHT] [-h|--help]\n"
+            "HOST je název serveru (např. irc.freenode.net)\n"
+            "PORT je číslo portu, na kterém server naslouchá (výchozí 6667)\n"
+            "CHANNELS obsahuje název jednoho či více kanálů, na které se klient připojí (název kanálu je zadán včetně úvodního # nebo &; v případě více kanálů jsou tyto odděleny čárkou)\n"
+            "-s SYSLOG_SERVER je ip adresa logovacího (SYSLOG) serveru\n"
+            "-l HIGHLIGHT seznam klíčových slov oddělených čárkou (např. \"ip,tcp,udp,isa\")" << endl;
+    exit(0);
+}
+
 void help(vector<string> arguments) {
     for(const auto &arg : arguments) {
         if(arg == "-h" || arg == "--help") {
-            cout << "help" << endl; //todo
-            exit(0);
+            doHelp();
         }
     }
 }
+
 string getSyslogServer(vector<string> arguments) {
     bool match = false;
     for(auto arg : arguments) {

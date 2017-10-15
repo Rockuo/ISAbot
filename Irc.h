@@ -10,7 +10,7 @@
 #include <iostream>
 #include <netdb.h>
 #include <functional>
-#include <string.h>
+#include <cstring>
 #include <vector>
 #include <map>
 
@@ -70,7 +70,6 @@ class Irc {
 public:
     Irc();
     int unlink();
-    int receive();
     void start(const std::string &host,  int port, vector<string> channels, const function<void(std::string)> &callback);
     ssize_t sendMessage(const std::string &string);
 
@@ -80,6 +79,7 @@ private:
     string message; //redundant copy of buffer
     bool handlePing();
     bool joinMe(vector<string> channels);
+    int receive();
 
     map<string, map<string, vector<string>>> chanelToUserToMessages;
     map<string, UserList> chanelUsers;

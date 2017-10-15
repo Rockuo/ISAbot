@@ -8,9 +8,12 @@
 #include <sys/socket.h>
 #include <iostream>
 #include <netdb.h>
+#include <cstring>
+#include <arpa/inet.h>
 #include <vector>
 #include <utility>
 #include <unistd.h>
+
 
 class Logger {
 public:
